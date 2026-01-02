@@ -12,7 +12,9 @@ const LogoVariantsGrid: React.FC<LogoVariantsGridProps> = ({ variants, onDownloa
     const link = document.createElement('a');
     link.href = url;
     link.download = filename;
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
   };
 
   const getIcon = (type: LogoVariant['type']) => {

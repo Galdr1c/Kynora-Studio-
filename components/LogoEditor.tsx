@@ -260,7 +260,7 @@ const LogoEditor: React.FC<LogoEditorProps> = ({ logo, isDarkMode, onClose, onSa
 
   return (
     <div className={`fixed inset-0 z-[200] flex flex-col font-sans overflow-hidden ${isDarkMode ? 'bg-[#0C0C0E] text-[#E2E2E6]' : 'bg-gray-50 text-gray-900'}`}>
-      <header className={`h-14 border-b flex items-center justify-between px-6 shrink-0 ${isDarkMode ? 'bg-[#0C0C0E]/80 border-white/5' : 'bg-white/80 border-gray-200'}`}>
+      <header className={`h-14 border-b flex items-center justify-between px-6 shrink-0 ${isDarkMode ? 'bg-[#0C0C0E]/80 border-white/5' : 'bg-white/80 border-gray-200 shadow-sm'}`}>
         <div className="flex items-center space-x-6">
            <div className={`flex p-1 rounded-xl ${isDarkMode ? 'bg-white/5' : 'bg-gray-100'}`}>
               <button onClick={() => setIsAnimationMode(false)} className={`px-4 py-1 text-xs font-bold rounded-lg transition-all ${!isAnimationMode ? (isDarkMode ? 'text-blue-400 bg-white/10' : 'text-blue-600 bg-white shadow-sm') : 'text-gray-500 hover:text-white'}`}>Design</button>
@@ -268,25 +268,25 @@ const LogoEditor: React.FC<LogoEditorProps> = ({ logo, isDarkMode, onClose, onSa
            </div>
            
            {!isAnimationMode && activeLayer && (
-             <div className={`flex items-center space-x-1 rounded-xl p-1 border ${isDarkMode ? 'bg-white/5 border-white/5' : 'bg-gray-100 border-gray-200'}`}>
+             <div className={`flex items-center space-x-1 rounded-xl p-1 border ${isDarkMode ? 'bg-white/5 border-white/5' : 'bg-white border-gray-200'}`}>
                <Tooltip content="Align Left" position="bottom" isDarkMode={isDarkMode}>
-                 <button onClick={() => alignLayer('left')} className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white"><AlignLeft size={16}/></button>
+                 <button onClick={() => alignLayer('left')} className={`p-2 rounded-lg transition-all ${isDarkMode ? 'hover:bg-white/10 text-gray-400 hover:text-white' : 'hover:bg-black/5 text-gray-500 hover:text-black'}`}><AlignLeft size={16}/></button>
                </Tooltip>
                <Tooltip content="Align Center" position="bottom" isDarkMode={isDarkMode}>
-                 <button onClick={() => alignLayer('center')} className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white"><AlignCenter size={16}/></button>
+                 <button onClick={() => alignLayer('center')} className={`p-2 rounded-lg transition-all ${isDarkMode ? 'hover:bg-white/10 text-gray-400 hover:text-white' : 'hover:bg-black/5 text-gray-500 hover:text-black'}`}><AlignCenter size={16}/></button>
                </Tooltip>
                <Tooltip content="Align Right" position="bottom" isDarkMode={isDarkMode}>
-                 <button onClick={() => alignLayer('right')} className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white"><AlignRight size={16}/></button>
+                 <button onClick={() => alignLayer('right')} className={`p-2 rounded-lg transition-all ${isDarkMode ? 'hover:bg-white/10 text-gray-400 hover:text-white' : 'hover:bg-black/5 text-gray-500 hover:text-black'}`}><AlignRight size={16}/></button>
                </Tooltip>
-               <div className="h-4 w-px bg-gray-400/10 mx-1" />
+               <div className={`h-4 w-px mx-1 ${isDarkMode ? 'bg-white/10' : 'bg-black/10'}`} />
                <Tooltip content="Align Top" position="bottom" isDarkMode={isDarkMode}>
-                 <button onClick={() => alignLayer('top')} className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white"><AlignVerticalJustifyStart size={16}/></button>
+                 <button onClick={() => alignLayer('top')} className={`p-2 rounded-lg transition-all ${isDarkMode ? 'hover:bg-white/10 text-gray-400 hover:text-white' : 'hover:bg-black/5 text-gray-500 hover:text-black'}`}><AlignVerticalJustifyStart size={16}/></button>
                </Tooltip>
                <Tooltip content="Align Middle" position="bottom" isDarkMode={isDarkMode}>
-                 <button onClick={() => alignLayer('middle')} className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white"><AlignVerticalJustifyCenter size={16}/></button>
+                 <button onClick={() => alignLayer('middle')} className={`p-2 rounded-lg transition-all ${isDarkMode ? 'hover:bg-white/10 text-gray-400 hover:text-white' : 'hover:bg-black/5 text-gray-500 hover:text-black'}`}><AlignVerticalJustifyCenter size={16}/></button>
                </Tooltip>
                <Tooltip content="Align Bottom" position="bottom" isDarkMode={isDarkMode}>
-                 <button onClick={() => alignLayer('bottom')} className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white"><AlignVerticalJustifyEnd size={16}/></button>
+                 <button onClick={() => alignLayer('bottom')} className={`p-2 rounded-lg transition-all ${isDarkMode ? 'hover:bg-white/10 text-gray-400 hover:text-white' : 'hover:bg-black/5 text-gray-500 hover:text-black'}`}><AlignVerticalJustifyEnd size={16}/></button>
                </Tooltip>
              </div>
            )}
@@ -306,7 +306,7 @@ const LogoEditor: React.FC<LogoEditorProps> = ({ logo, isDarkMode, onClose, onSa
                 <button 
                   key={cat.id} 
                   onClick={() => { setStyle(cat.id); setTimeout(syncWorkspace, 1000); }}
-                  className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm transition-all ${style === cat.id ? 'bg-blue-600/10 text-blue-400 font-bold' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
+                  className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm transition-all ${style === cat.id ? 'bg-blue-600/10 text-blue-400 font-bold' : (isDarkMode ? 'text-gray-400 hover:bg-white/5 hover:text-white' : 'text-gray-500 hover:bg-black/5 hover:text-gray-900')}`}
                 >
                   {cat.icon}<span>{cat.label}</span>
                   {style === cat.id && <CheckCircle2 size={14} className="ml-auto text-blue-400" />}
@@ -323,7 +323,7 @@ const LogoEditor: React.FC<LogoEditorProps> = ({ logo, isDarkMode, onClose, onSa
             </div>
 
             {isAnimationMode && (
-              <div className={`w-full max-w-4xl border rounded-[2rem] overflow-hidden ${isDarkMode ? 'border-white/5 bg-[#0C0C0E]' : 'border-gray-200 bg-gray-50'}`}>
+              <div className={`w-full max-w-4xl border rounded-[2rem] overflow-hidden ${isDarkMode ? 'border-white/5 bg-[#0C0C0E]' : 'border-gray-200 bg-white'}`}>
                 {/* Playback Controls */}
                 <div className={`flex items-center justify-between px-6 py-4 border-b ${isDarkMode ? 'border-white/5' : 'border-gray-200'}`}>
                   <div className="flex items-center space-x-3">
@@ -377,7 +377,7 @@ const LogoEditor: React.FC<LogoEditorProps> = ({ logo, isDarkMode, onClose, onSa
                 {/* Timeline Tracks */}
                 <div className="px-6 pb-6 space-y-2 max-h-64 overflow-y-auto scrollbar-thin">
                   {layers.map(layer => (
-                    <div key={layer.id} className={`p-4 rounded-xl border ${isDarkMode ? 'bg-white/[0.02] border-white/5' : 'bg-white border-gray-200'}`}>
+                    <div key={layer.id} className={`p-4 rounded-xl border ${isDarkMode ? 'bg-white/[0.02] border-white/5' : 'bg-gray-50 border-gray-200'}`}>
                       <div className="flex items-center justify-between mb-3">
                         <span className={`text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{layer.type} Identity Node</span>
                         <div className="flex gap-2">
@@ -407,22 +407,22 @@ const LogoEditor: React.FC<LogoEditorProps> = ({ logo, isDarkMode, onClose, onSa
           {activeLayer ? (
             <div className="space-y-10">
               <div className="space-y-6">
-                <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">Geometry</label>
+                <label className={`text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>Geometry</label>
                 <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <span className="text-[9px] font-black text-gray-600 uppercase">Position X</span>
-                    <input type="number" value={Math.round(activeLayer.x)} onChange={(e) => updateLayer(activeLayer.id, { x: parseInt(e.target.value) })} className={`w-full p-3 rounded-xl border text-xs font-mono font-bold outline-none ${isDarkMode ? 'bg-black/40 border-white/5' : 'bg-gray-50 border-gray-200'}`} />
+                    <input type="number" value={Math.round(activeLayer.x)} onChange={(e) => updateLayer(activeLayer.id, { x: parseInt(e.target.value) })} className={`w-full p-3 rounded-xl border text-xs font-mono font-bold outline-none ${isDarkMode ? 'bg-black/40 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`} />
                   </div>
                   <div className="space-y-2">
                     <span className="text-[9px] font-black text-gray-600 uppercase">Position Y</span>
-                    <input type="number" value={Math.round(activeLayer.y)} onChange={(e) => updateLayer(activeLayer.id, { y: parseInt(e.target.value) })} className={`w-full p-3 rounded-xl border text-xs font-mono font-bold outline-none ${isDarkMode ? 'bg-black/40 border-white/5' : 'bg-gray-50 border-gray-200'}`} />
+                    <input type="number" value={Math.round(activeLayer.y)} onChange={(e) => updateLayer(activeLayer.id, { y: parseInt(e.target.value) })} className={`w-full p-3 rounded-xl border text-xs font-mono font-bold outline-none ${isDarkMode ? 'bg-black/40 border-white/5 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`} />
                   </div>
                 </div>
               </div>
 
               {activeLayer.type !== 'icon' && (
                 <div className="space-y-8">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">Typography Engine</label>
+                  <label className={`text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>Typography Engine</label>
                   <div className="space-y-6">
                     <div className="space-y-2">
                       <span className="text-[9px] font-black text-gray-600 uppercase">Typeface Family</span>
@@ -457,8 +457,8 @@ const LogoEditor: React.FC<LogoEditorProps> = ({ logo, isDarkMode, onClose, onSa
             </div>
           ) : (
             <div className="h-full flex flex-col items-center justify-center text-center opacity-30 space-y-4">
-               <div className="w-16 h-16 rounded-full border-2 border-dashed border-gray-500 flex items-center justify-center"><MousePointer2 size={32}/></div>
-               <p className="text-xs font-black uppercase tracking-widest leading-relaxed">Select a layer to<br/>forge properties</p>
+               <div className={`w-16 h-16 rounded-full border-2 border-dashed flex items-center justify-center ${isDarkMode ? 'border-gray-500' : 'border-gray-300'}`}><MousePointer2 size={32}/></div>
+               <p className={`text-xs font-black uppercase tracking-widest leading-relaxed ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Select a layer to<br/>forge properties</p>
             </div>
           )}
         </aside>

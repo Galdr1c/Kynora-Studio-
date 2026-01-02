@@ -444,25 +444,16 @@ export const extractBrandInfoFromImage = async (base64Image: string): Promise<{
 
 1. **Brand Name Detection**: Extract the main text/brand name. If unclear, return "Imported Brand".
 
-2. **Component Layer Detection**: Identify ALL visual elements and classify them:
-   - "icon": Any graphical symbol, illustration, or decorative element
-   - "text": The main brand name text
-   - "slogan": Any tagline, subtitle, or secondary text
+2. **Component Layer Detection**: Identify ONLY core visual elements (the text and the primary icon/logo symbol).
+   - "icon": The main graphical symbol or illustration.
+   - "text": The primary brand name text.
+   - "slogan": Any secondary tagline.
    
-3. **Spatial Analysis**: For EACH detected component, determine:
-   - X position: Horizontal center point (0-100 percentage from left)
-   - Y position: Vertical center point (0-100 percentage from top)
-   - Scale: Relative size (0.5 = half size, 1.0 = normal, 2.0 = double size)
+3. **Deep Cleaning Constraint**: You must IGNORE and DISCARD any complex backgrounds, photographic textures, paper grains, shadows, desk surfaces, or environmental artifacts. Focus ONLY on the vector-like shapes of the mark and text.
 
-4. **Style Classification**: Categorize the design style as one of:
-   - "modern": Clean, geometric, contemporary
-   - "minimalist": Simple, sparse, essential
-   - "luxury": Premium, elegant, sophisticated
-   - "tech": Futuristic, digital, innovative
-   - "vintage": Retro, classic, nostalgic
-   - "playful": Fun, colorful, dynamic
+4. **Spatial Analysis**: For EACH detected core component, determine its center point (X, Y as 0-100% of the viewport) and its relative scale.
 
-5. **Slogan Extraction**: If there's a tagline or subtitle, extract it. Otherwise return empty string.
+5. **Style Classification**: Categorize as modern, minimalist, luxury, tech, vintage, or playful.
 
 Return ONLY valid JSON with this exact structure:
 {
@@ -471,12 +462,9 @@ Return ONLY valid JSON with this exact structure:
   "slogan": "Tagline here or empty string",
   "layers": [
     { "type": "icon", "x": 50, "y": 30, "scale": 1.2 },
-    { "type": "text", "x": 50, "y": 65, "scale": 1.0 },
-    { "type": "slogan", "x": 50, "y": 80, "scale": 0.7 }
+    { "type": "text", "x": 50, "y": 65, "scale": 1.0 }
   ]
-}
-
-CRITICAL: Be precise with positioning. X:50 Y:50 is dead center. X:0 Y:0 is top-left corner.` 
+}` 
           },
         ],
       },
@@ -554,18 +542,23 @@ export const recomposeLogo = async (
       return `- Layer ${l.type.toUpperCase()}: Content "${content}". Placement: X:${Math.round(l.x)}%, Y:${Math.round(l.y)}%. Transformation: Scale:${l.scale}x, Rot:${l.rotation}deg, FlipX:${l.flipX}, FlipY:${l.flipY}. Visual: Opacity:${l.opacity}%, Color:${primaryColor}.`;
     }).join('\n');
 
-    const prompt = `Professional Brand Identity Re-rendering.
+    const prompt = `Advanced Brand Reconstruction.
     Source: attached image.
-    Instruction: Synthesize a high-fidelity vector-style render.
+    Task: Isolate the brand elements and render them as a perfectly clean, high-definition digital mark.
+    
+    STRICT CLEANING PROTOCOL: 
+    1. EXTRACT ONLY the text and the core icon symbol.
+    2. DISCARD ALL original background gradients, noisy textures, photographic artifacts, desk surfaces, paper grains, and shadows from the source. 
+    3. RENDER ON A PERFECTLY FLAT, SOLID ${bgColor} background. 
+    4. Ensure absolutely no raster noise or environmental shadows remain.
     
     ${visibilityInstruction}
     
     Composition Architecture:
     ${visibleLayerDirectives}
     
-    Target Aesthetic: ${style}, high-end SaaS quality, geometric perfection.
-    Environment: Solid ${bgColor}. Asset Main Color: ${primaryColor}. Typography Color: ${textColor}.
-    Constraint: FLAT DESIGN. No raster noise. High-definition vector-like paths. No traces of hidden elements.`;
+    Target Aesthetic: ${style}, high-end SaaS quality, flat geometric perfection.
+    Asset Main Color: ${primaryColor}. Typography Color: ${textColor}.`;
 
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash-image',

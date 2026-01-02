@@ -82,18 +82,18 @@ const EffectivenessReportModal: React.FC<EffectivenessReportModalProps> = ({ log
   }, [onClose]);
 
   const handleExportPDF = () => {
-    alert("Compiling Neural Audit Report into high-fidelity PDF...");
+    window.print();
   };
 
   return (
     <div 
       className={`fixed inset-0 z-[600] backdrop-blur-xl flex items-center justify-center p-8 ${
         isDarkMode ? 'bg-black/80' : 'bg-gray-900/60'
-      }`}
+      } no-print`}
       onClick={onClose} // Problem 6: Close on backdrop click
     >
       <div 
-        className={`w-full max-w-4xl backdrop-blur-3xl border rounded-[3rem] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col ${
+        className={`w-full max-w-4xl backdrop-blur-3xl border rounded-[3rem] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col print-container ${
           isDarkMode 
             ? 'bg-[#1A1A1E]/98 border-white/10' 
             : 'bg-white/98 border-gray-200'
@@ -101,7 +101,7 @@ const EffectivenessReportModal: React.FC<EffectivenessReportModalProps> = ({ log
         onClick={(e) => e.stopPropagation()} // Problem 6: Don't close when clicking inside
       >
         {/* Header with Close Button (Problem 6 Fix) */}
-        <div className={`px-8 py-6 border-b flex items-center justify-between ${
+        <div className={`px-8 py-6 border-b flex items-center justify-between no-print ${
           isDarkMode ? 'border-white/5' : 'border-gray-200'
         }`}>
           <div className="flex items-center space-x-4">
@@ -127,7 +127,7 @@ const EffectivenessReportModal: React.FC<EffectivenessReportModalProps> = ({ log
           <div className="flex items-center space-x-4">
             <button onClick={handleExportPDF} className="hidden sm:flex items-center space-x-2 bg-white text-black px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-gray-200 transition-all active:scale-95 shadow-lg border border-gray-100">
               <Download size={14}/>
-              <span>Export PDF</span>
+              <span>Export Report</span>
             </button>
             <button
               onClick={onClose}
@@ -143,13 +143,13 @@ const EffectivenessReportModal: React.FC<EffectivenessReportModalProps> = ({ log
         </div>
 
         {/* Modal Content */}
-        <div className="flex-1 overflow-y-auto p-8 scrollbar-thin">
+        <div className="flex-1 overflow-y-auto p-8 scrollbar-thin print-content">
           <div className="space-y-16">
             {/* Summary View */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
               <div className="lg:col-span-5 flex flex-col items-center justify-center">
                 <div className="relative w-64 h-64 flex items-center justify-center">
-                   <div className="absolute inset-0 bg-blue-600/20 blur-[100px] rounded-full animate-pulse" />
+                   <div className="absolute inset-0 bg-blue-600/20 blur-[100px] rounded-full animate-pulse no-print" />
                    <svg className="w-full h-full -rotate-90 relative z-10">
                       <circle cx="128" cy="128" r="110" className="stroke-white/5 fill-none" strokeWidth="12" />
                       <circle 
@@ -207,7 +207,7 @@ const EffectivenessReportModal: React.FC<EffectivenessReportModalProps> = ({ log
                      <h3 className={`text-xs font-black uppercase tracking-widest ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Identity Optimization</h3>
                   </div>
                   <div className={`p-8 rounded-[2.5rem] space-y-8 relative overflow-hidden border ${isDarkMode ? 'bg-gradient-to-br from-purple-600/10 to-blue-600/10 border-white/10' : 'bg-gradient-to-br from-purple-50 to-blue-50 border-purple-100'}`}>
-                     <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 blur-3xl -mr-10 -mt-10" />
+                     <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 blur-3xl -mr-10 -mt-10 no-print" />
                      <p className={`text-xs font-bold leading-relaxed relative z-10 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>Generative recommendations for performance uplift:</p>
                      <ul className="space-y-5 relative z-10">
                         {report.suggestions.map((s, i) => (
@@ -237,6 +237,27 @@ const EffectivenessReportModal: React.FC<EffectivenessReportModalProps> = ({ log
         }
         .animate-shimmer {
           animation: shimmer 3s linear infinite;
+        }
+        @media print {
+          .no-print { display: none !important; }
+          body { background: white !important; }
+          .print-container { 
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: auto !important;
+            max-height: none !important;
+            border: none !important;
+            background: white !important;
+            color: black !important;
+            box-shadow: none !important;
+          }
+          .print-content { 
+            overflow: visible !important;
+            padding: 0 !important;
+          }
+          * { color-adjust: exact !important; -webkit-print-color-adjust: exact !important; }
         }
       `}</style>
     </div>

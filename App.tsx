@@ -27,6 +27,15 @@ const INITIAL_LAYERS: LogoLayer[] = [
   { id: 'l3', type: 'slogan', x: 50, y: 75, scale: 0.8, rotation: 0, flipX: false, flipY: false, opacity: 80, isVisible: true, isLocked: false, fontFamily: 'Outfit', fontSize: 24 },
 ];
 
+const triggerDownload = (url: string, filename: string) => {
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
 const Tooltip: React.FC<{
   children: React.ReactNode;
   content: string;
@@ -307,6 +316,26 @@ const App: React.FC = () => {
     }
   };
 
+  const handleDownloadAllVariants = async () => {
+    if (!selectedLogo?.variants) return;
+    addNotification('Export Initiated', `Downloading ${selectedLogo.variants.length} variations...`);
+    for (const v of selectedLogo.variants) {
+      triggerDownload(v.lightUrl, `${brandName}-variant-${v.type}-light.png`);
+      await new Promise(r => setTimeout(r, 300));
+      triggerDownload(v.darkUrl, `${brandName}-variant-${v.type}-dark.png`);
+      await new Promise(r => setTimeout(r, 300));
+    }
+  };
+
+  const handleDownloadAllBrandKit = async () => {
+    if (!selectedLogo?.brandKit?.assets) return;
+    addNotification('Export Initiated', `Downloading ${selectedLogo.brandKit.assets.length} artifacts...`);
+    for (const asset of selectedLogo.brandKit.assets) {
+      triggerDownload(asset.imageUrl, `${brandName}-asset-${asset.type}.png`);
+      await new Promise(r => setTimeout(r, 300));
+    }
+  };
+
   const handleGenerateBrandKit = async () => {
     if (!selectedLogo || isGeneratingKit) return;
     setIsGeneratingKit(true);
@@ -350,7 +379,7 @@ const App: React.FC = () => {
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setProcessingMessage('Analyzing your logo with AI...');
+    setProcessingMessage('Analyzing and cleaning brand marks...');
     setIsGenerating(true);
     try {
       const base64 = await fileToBase64(file);
@@ -390,7 +419,7 @@ const App: React.FC = () => {
       newLogo.darkUrl = darkUrl;
       setLogos(prev => [newLogo, ...prev]);
       setSelectedLogoId(newLogo.id);
-      addNotification('Logo Imported', `Successfully analyzed ${name}'s DNA.`);
+      addNotification('Logo Imported', `Successfully analyzed and isolated ${name}'s DNA.`);
     } catch (error) {
       console.error('❌ Logo upload failed:', error);
     } finally {
@@ -435,10 +464,7 @@ const App: React.FC = () => {
     { icon: <Upload size={16} />, label: 'Upload Logo', shortcut: 'U', action: () => document.getElementById('logo-upload')?.click(), category: 'Actions' },
     { icon: <Download size={16} />, label: 'Download Current Logo', shortcut: 'D', action: () => {
       if (selectedLogo) {
-        const link = document.createElement('a');
-        link.href = selectedLogo.url;
-        link.download = `kynora-${selectedLogo.id.slice(0,5)}.png`;
-        link.click();
+        triggerDownload(selectedLogo.url, `kynora-${selectedLogo.id.slice(0,5)}.png`);
       }
     }, category: 'Actions' },
     { icon: <Edit size={16} />, label: 'Open Editor', shortcut: 'E', action: () => setIsEditorOpen(true), category: 'Actions' },
@@ -467,7 +493,7 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-[#FAFAFA] dark:bg-[#0C0C0E] text-[#1D2B3A] dark:text-[#E2E2E6] font-sans transition-colors duration-500 selection:bg-purple-500/30">
       <header className="sticky top-0 z-[100] border-b border-white/[0.08]">
         <div className="absolute inset-0 bg-gradient-to-r from-purple-900/10 via-blue-900/10 to-pink-900/10 backdrop-blur-2xl" />
-        <div className="absolute inset-0 bg-[#0C0C0E]/60" />
+        <div className={`absolute inset-0 ${isDarkMode ? 'bg-[#0C0C0E]/60' : 'bg-white/60'}`} />
         <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-purple-500/50 to-transparent animate-shimmer-slow" />
         
         <div className="relative max-w-screen-2xl mx-auto px-8 py-4">
@@ -494,7 +520,7 @@ const App: React.FC = () => {
             <div className="flex items-center space-x-4 relative">
               <nav className="hidden md:flex items-center space-x-2 bg-white/[0.03] backdrop-blur-xl border border-white/[0.08] rounded-2xl p-1.5">
                 {['Resources', 'Pricing', 'Enterprise'].map((item) => (
-                  <a key={item} href="#" className="px-5 py-2.5 text-xs font-bold text-gray-400 hover:text-white hover:bg-white/[0.08] rounded-xl transition-all duration-300 hover:shadow-lg">{item}</a>
+                  <a key={item} href="#" className={`px-5 py-2.5 text-xs font-bold transition-all duration-300 rounded-xl hover:shadow-lg ${isDarkMode ? 'text-gray-400 hover:text-white hover:bg-white/[0.08]' : 'text-gray-600 hover:text-gray-900 hover:bg-black/[0.04]'}`}>{item}</a>
                 ))}
               </nav>
               <div className="h-8 w-[1px] bg-gradient-to-b from-transparent via-white/10 to-transparent" />
@@ -504,8 +530,8 @@ const App: React.FC = () => {
                   onClick={() => setShowNotifications(!showNotifications)}
                   className="relative group"
                 >
-                  <div className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white/[0.05] border border-white/10 hover:border-white/20 transition-all duration-300 hover:scale-110">
-                    <Activity size={20} className="text-gray-400" />
+                  <div className={`w-12 h-12 flex items-center justify-center rounded-2xl border transition-all duration-300 hover:scale-110 ${isDarkMode ? 'bg-white/[0.05] border-white/10 hover:border-white/20' : 'bg-black/[0.02] border-black/10 hover:border-black/20'}`}>
+                    <Activity size={20} className={isDarkMode ? 'text-gray-400' : 'text-gray-600'} />
                     {unreadCount > 0 && (
                       <div className="absolute -top-1 -right-1">
                         <div className="relative">
@@ -625,7 +651,7 @@ const App: React.FC = () => {
               <Tooltip content={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"} position="bottom" isDarkMode={isDarkMode}>
                 <button onClick={() => setIsDarkMode(!isDarkMode)} className="relative group">
                   <div className="absolute inset-0 bg-gradient-to-tr from-amber-500/20 to-blue-500/20 rounded-2xl blur-lg opacity-0 group-hover:opacity-100 transition-all duration-500" />
-                  <div className="relative w-12 h-12 flex items-center justify-center rounded-2xl bg-white/[0.05] border border-white/10 hover:border-white/20 transition-all duration-300 group-hover:scale-110">
+                  <div className={`relative w-12 h-12 flex items-center justify-center rounded-2xl border transition-all duration-300 group-hover:scale-110 ${isDarkMode ? 'bg-white/[0.05] border-white/10 hover:border-white/20' : 'bg-black/[0.02] border-black/10 hover:border-black/20'}`}>
                     {isDarkMode ? <Sun size={20} className="text-amber-400 group-hover:rotate-180 transition-transform duration-500" /> : <Moon size={20} className="text-blue-400 group-hover:rotate-180 transition-transform duration-500" />}
                   </div>
                 </button>
@@ -653,7 +679,7 @@ const App: React.FC = () => {
         <aside className="lg:col-span-4 space-y-8">
           <section className="relative group">
             <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 via-blue-600/20 to-pink-600/20 rounded-[3rem] blur-3xl opacity-0 group-hover:opacity-100 transition-all duration-1000" />
-            <div className="relative bg-gradient-to-br from-[#1A1A1E]/95 to-[#161618]/95 backdrop-blur-2xl rounded-[3rem] p-10 border border-white/[0.08] shadow-[0_20px_80px_-20px_rgba(0,0,0,0.8)] overflow-hidden">
+            <div className={`relative backdrop-blur-2xl rounded-[3rem] p-10 border shadow-[0_20px_80px_-20px_rgba(0,0,0,0.8)] overflow-hidden ${isDarkMode ? 'bg-gradient-to-br from-[#1A1A1E]/95 to-[#161618]/95 border-white/[0.08]' : 'bg-white border-gray-200 shadow-xl'}`}>
               <div className="absolute -top-24 -right-24 w-64 h-64 bg-purple-600/10 rounded-full blur-3xl animate-float" />
               <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-blue-600/10 rounded-full blur-3xl animate-float-delayed" />
               <div className="relative z-10 space-y-8">
@@ -677,19 +703,19 @@ const App: React.FC = () => {
                 </div>
                 <div className="space-y-3">
                   <label className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em]">Brandmark Identity</span>
+                    <span className={`text-[10px] font-bold uppercase tracking-[0.2em] ${isDarkMode ? 'text-gray-500' : 'text-gray-600'}`}>Brandmark Identity</span>
                   </label>
                   <div className="relative group/input">
                     <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-blue-600/20 rounded-2xl blur-xl opacity-0 group-focus-within/input:opacity-100 transition-all duration-500" />
                     <div className="relative flex items-center">
                       <div className="absolute left-5 text-gray-600 group-focus-within/input:text-purple-400 transition-colors"><Edit3 size={16} /></div>
-                      <input type="text" value={brandName} onChange={(e) => setBrandName(e.target.value)} className="w-full pl-14 pr-6 py-5 bg-black/40 border-2 border-white/[0.08] rounded-2xl text-base font-bold text-white outline-none focus:border-purple-500/50 focus:bg-black/60 transition-all duration-300" placeholder="e.g., Kynora, TechCorp, Luminaire..." />
+                      <input type="text" value={brandName} onChange={(e) => setBrandName(e.target.value)} className={`w-full pl-14 pr-6 py-5 border-2 rounded-2xl text-base font-bold outline-none focus:border-purple-500/50 transition-all duration-300 ${isDarkMode ? 'bg-black/40 border-white/[0.08] text-white focus:bg-black/60' : 'bg-gray-50 border-gray-200 text-gray-900 focus:bg-white'}`} placeholder="e.g., Kynora, TechCorp, Luminaire..." />
                       {brandName && <div className="absolute right-5"><CheckCircle2 size={20} className="text-emerald-500 animate-scale-in" /></div>}
                     </div>
                   </div>
                 </div>
                 <div className="space-y-4">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em]">Aesthetic Preset</label>
+                  <label className={`text-[10px] font-bold uppercase tracking-[0.2em] ${isDarkMode ? 'text-gray-500' : 'text-gray-600'}`}>Aesthetic Preset</label>
                   <div className="grid grid-cols-2 gap-3">
                     {STYLE_PRESETS.map((preset) => (
                       <button key={preset.id} onClick={() => setStyle(preset.id)} className="relative group/preset overflow-hidden">
@@ -704,33 +730,33 @@ const App: React.FC = () => {
                 </div>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em]">Import Existing Logo</label>
+                    <label className={`text-[10px] font-bold uppercase tracking-[0.2em] ${isDarkMode ? 'text-gray-500' : 'text-gray-600'}`}>Import Existing Logo</label>
                     <CloudUpload size={12} className="text-blue-500" />
                   </div>
                   <input type="file" accept="image/png,image/jpeg,image/svg+xml" onChange={handleLogoUpload} className="hidden" id="logo-upload" />
                   <label htmlFor="logo-upload" className="relative block group/upload cursor-pointer">
                     <div className="absolute inset-0 bg-gradient-to-r from-purple-600/50 via-blue-600/50 to-pink-600/50 rounded-[2rem] blur-xl opacity-0 group-hover/upload:opacity-100 transition-all duration-500" />
-                    <div className="relative flex flex-col items-center justify-center px-8 py-12 bg-black/40 border-2 border-dashed border-white/[0.08] rounded-[2rem] group-hover/upload:border-purple-500/50 group-hover/upload:bg-black/60 transition-all duration-500">
+                    <div className={`relative flex flex-col items-center justify-center px-8 py-12 border-2 border-dashed rounded-[2rem] transition-all duration-500 ${isDarkMode ? 'bg-black/40 border-white/[0.08] group-hover:border-purple-500/50 group-hover:bg-black/60' : 'bg-gray-50 border-gray-300 group-hover:border-purple-500/50 group-hover:bg-white'}`}>
                       <div className="relative mb-4">
                         <div className="absolute inset-0 bg-blue-600/20 rounded-full blur-2xl animate-pulse-slow" />
                         <div className="relative p-4 bg-gradient-to-br from-blue-600/20 to-purple-600/20 rounded-2xl border border-blue-500/20 group-hover/upload:scale-110 transition-all duration-500">
                           <Download size={32} className="text-blue-400" />
                         </div>
                       </div>
-                      <p className="text-sm font-bold text-white">Drop your logo here</p>
+                      <p className={`text-sm font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Drop your logo here</p>
                       <p className="text-xs text-gray-500">or <span className="text-blue-400 font-semibold">click to browse</span></p>
                     </div>
                   </label>
                 </div>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em]">Symbolic Vision</label>
+                    <label className={`text-[10px] font-bold uppercase tracking-[0.2em] ${isDarkMode ? 'text-gray-500' : 'text-gray-600'}`}>Symbolic Vision</label>
                     <button onClick={() => setPrompt('A modern geometric shield with neural patterns')} className="group/surprise flex items-center space-x-2 px-3 py-1.5 bg-gradient-to-r from-purple-600/10 to-blue-600/10 border border-purple-500/20 rounded-xl transition-all duration-300">
                       <Sparkles size={12} className="text-purple-400 group-hover/surprise:rotate-180 transition-transform duration-500" />
                       <span className="text-[9px] font-black text-purple-400 uppercase tracking-wider">Surprise Me</span>
                     </button>
                   </div>
-                  <textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} className="relative w-full h-48 p-6 text-sm font-medium bg-black/40 border-2 border-white/[0.08] rounded-[2rem] outline-none focus:border-purple-500/50 focus:bg-black/60 resize-none leading-relaxed text-gray-300" placeholder="Describe the icon geometry..." />
+                  <textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} className={`relative w-full h-48 p-6 text-sm font-medium border-2 rounded-[2rem] outline-none focus:border-purple-500/50 resize-none leading-relaxed transition-all ${isDarkMode ? 'bg-black/40 border-white/[0.08] text-gray-300 focus:bg-black/60' : 'bg-gray-50 border-gray-200 text-gray-700 focus:bg-white'}`} placeholder="Describe the icon geometry..." />
                 </div>
                 <button onClick={handleGenerate} disabled={isGenerating} className="relative w-full group/generate overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-blue-600 to-pink-600" />
@@ -759,19 +785,19 @@ const App: React.FC = () => {
         <div className="lg:col-span-8 space-y-12">
            {selectedLogo ? (
              <div className="space-y-16 animate-in fade-in slide-in-from-bottom-12 duration-1000">
-                <div className="flex bg-white dark:bg-white/5 p-1.5 rounded-2xl border border-gray-100 dark:border-white/5 w-fit mx-auto shadow-2xl backdrop-blur-xl">
-                   <button onClick={() => setActiveTab('preview')} className={`px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'preview' ? 'bg-white dark:bg-white/10 text-purple-600 dark:text-white shadow-lg' : 'text-gray-400'}`}>Preview</button>
-                   <button onClick={() => selectedLogo.variants ? setActiveTab('variants') : handleGenerateVariants()} className={`px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center space-x-3 ${activeTab === 'variants' ? 'bg-white dark:bg-white/10 text-purple-600 dark:text-white shadow-lg' : 'text-gray-400'}`}>Variants</button>
-                   <button onClick={() => setActiveTab('styles')} className={`px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center space-x-3 ${activeTab === 'styles' ? 'bg-white dark:bg-white/10 text-purple-600 dark:text-white shadow-lg' : 'text-gray-400'}`}>Styles</button>
-                   <button onClick={() => setActiveTab('3d')} className={`px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center space-x-3 ${activeTab === '3d' ? 'bg-white dark:bg-white/10 text-purple-600 dark:text-white shadow-lg' : 'text-gray-400'}`}>3D</button>
+                <div className={`flex p-1.5 rounded-2xl border w-fit mx-auto shadow-2xl backdrop-blur-xl ${isDarkMode ? 'bg-white/5 border-white/5' : 'bg-white border-gray-100'}`}>
+                   <button onClick={() => setActiveTab('preview')} className={`px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'preview' ? (isDarkMode ? 'bg-white/10 text-white shadow-lg' : 'bg-gray-100 text-blue-600 shadow-md') : 'text-gray-400'}`}>Preview</button>
+                   <button onClick={() => selectedLogo.variants ? setActiveTab('variants') : handleGenerateVariants()} className={`px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center space-x-3 ${activeTab === 'variants' ? (isDarkMode ? 'bg-white/10 text-white shadow-lg' : 'bg-gray-100 text-blue-600 shadow-md') : 'text-gray-400'}`}>Variants</button>
+                   <button onClick={() => setActiveTab('styles')} className={`px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center space-x-3 ${activeTab === 'styles' ? (isDarkMode ? 'bg-white/10 text-white shadow-lg' : 'bg-gray-100 text-blue-600 shadow-md') : 'text-gray-400'}`}>Styles</button>
+                   <button onClick={() => setActiveTab('3d')} className={`px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center space-x-3 ${activeTab === '3d' ? (isDarkMode ? 'bg-white/10 text-white shadow-lg' : 'bg-gray-100 text-blue-600 shadow-md') : 'text-gray-400'}`}>3D</button>
                 </div>
 
                 {activeTab === 'preview' ? (
                   <>
                     <section className="relative group/preview">
                       <div className="absolute inset-0 bg-gradient-to-br from-purple-600/5 via-blue-600/5 to-pink-600/5 rounded-[4rem] blur-3xl opacity-0 group-hover/preview:opacity-100 transition-all duration-1000" />
-                      <div className="relative bg-gradient-to-br from-[#1A1A1E]/98 to-[#161618]/98 backdrop-blur-3xl rounded-[4rem] border border-white/[0.08] shadow-[0_60px_120px_-30px_rgba(0,0,0,0.9)] overflow-hidden">
-                        <div className="relative px-12 py-8 border-b border-white/[0.05] bg-gradient-to-r from-white/[0.02] to-transparent">
+                      <div className={`relative backdrop-blur-3xl rounded-[4rem] border shadow-[0_60px_120px_-30px_rgba(0,0,0,0.9)] overflow-hidden ${isDarkMode ? 'bg-gradient-to-br from-[#1A1A1E]/98 to-[#161618]/98 border-white/[0.08]' : 'bg-white border-gray-200 shadow-2xl'}`}>
+                        <div className={`relative px-12 py-8 border-b bg-gradient-to-r from-white/[0.02] to-transparent ${isDarkMode ? 'border-white/[0.05]' : 'border-gray-100'}`}>
                           <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-6">
                               <div className="relative">
@@ -781,7 +807,7 @@ const App: React.FC = () => {
                                 </div>
                               </div>
                               <div className="space-y-2">
-                                <h2 className="text-3xl font-black tracking-tight bg-gradient-to-r from-white via-purple-200 to-blue-200 bg-clip-text text-transparent">Identity Artifact</h2>
+                                <h2 className={`text-3xl font-black tracking-tight ${isDarkMode ? 'bg-gradient-to-r from-white via-purple-200 to-blue-200 bg-clip-text text-transparent' : 'text-gray-900'}`}>Identity Artifact</h2>
                                 <div className="flex items-center space-x-4">
                                   <div className="flex items-center space-x-2">
                                     <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-lg shadow-emerald-500/50" />
@@ -793,20 +819,20 @@ const App: React.FC = () => {
                             </div>
                             <div className="flex items-center space-x-3">
                               <Tooltip content="Neural Effectiveness Audit" position="top" isDarkMode={isDarkMode}>
-                                <button onClick={() => handleNeuralAudit()} className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-purple-500/20 text-gray-400 hover:text-purple-400 transition-all"><BarChart3 size={20}/></button>
+                                <button onClick={() => handleNeuralAudit()} className={`p-4 rounded-2xl border transition-all ${isDarkMode ? 'bg-white/5 border-white/10 hover:bg-purple-500/20 text-gray-400 hover:text-purple-400' : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-purple-50'}`}><BarChart3 size={20}/></button>
                               </Tooltip>
                               <Tooltip content="Open Synthesis Lab" position="top" isDarkMode={isDarkMode}>
-                                <button onClick={() => setIsEditorOpen(true)} className="relative flex items-center space-x-3 px-8 py-4 bg-white/[0.05] border border-white/10 hover:border-purple-500/30 rounded-2xl transition-all duration-300">
-                                  <Edit size={18} className="text-gray-400" /><span className="text-xs font-black uppercase tracking-[0.2em] text-gray-300">Design Lab</span>
+                                <button onClick={() => setIsEditorOpen(true)} className={`relative flex items-center space-x-3 px-8 py-4 border rounded-2xl transition-all duration-300 ${isDarkMode ? 'bg-white/[0.05] border-white/10 hover:border-purple-500/30 text-gray-300' : 'bg-gray-50 border-gray-200 hover:bg-white text-gray-700'}`}>
+                                  <Edit size={18} className="text-gray-400" /><span className="text-xs font-black uppercase tracking-[0.2em]">Design Lab</span>
                                 </button>
                               </Tooltip>
-                              <button className="relative p-4 bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl shadow-2xl transition-all duration-300 group-hover/preview:scale-110"><Download size={22} className="text-white" /></button>
+                              <button onClick={() => triggerDownload(selectedLogo.url, `${brandName}-main.png`)} className="relative p-4 bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl shadow-2xl transition-all duration-300 group-hover/preview:scale-110"><Download size={22} className="text-white" /></button>
                             </div>
                           </div>
                         </div>
 
                         <div className="p-20 grid grid-cols-1 md:grid-cols-2 gap-20 relative">
-                          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.02)_0,transparent_70%)] opacity-50 pointer-events-none" />
+                          <div className={`absolute inset-0 ${isDarkMode ? 'bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.02)_0,transparent_70%)]' : 'bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.02)_0,transparent_70%)]'} opacity-50 pointer-events-none`} />
                           <div className="relative space-y-8 group/light">
                             <div className="flex items-center justify-center space-x-4">
                               <div className="h-[1px] w-16 bg-gradient-to-r from-transparent to-amber-500/30" />
@@ -835,15 +861,15 @@ const App: React.FC = () => {
                           </div>
                         </div>
 
-                        <div className="px-12 py-6 border-t border-white/[0.05] bg-white/[0.01] flex items-center justify-between">
+                        <div className={`px-12 py-6 border-t flex items-center justify-between ${isDarkMode ? 'border-white/[0.05] bg-white/[0.01]' : 'border-gray-100 bg-gray-50/50'}`}>
                           <div className="flex items-center space-x-8">
                             <div className="flex items-center space-x-3">
-                              <div className="w-10 h-10 bg-purple-600/10 rounded-xl flex items-center justify-center border border-purple-500/20"><Box size={18} className="text-purple-400" /></div>
-                              <div><p className="text-[9px] text-gray-600 uppercase tracking-wider font-bold">Resolution</p><p className="text-xs font-black text-white">2048 × 2048px</p></div>
+                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${isDarkMode ? 'bg-purple-600/10 border-purple-500/20' : 'bg-purple-50 border-purple-200'}`}><Box size={18} className="text-purple-400" /></div>
+                              <div><p className="text-[9px] text-gray-600 uppercase tracking-wider font-bold">Resolution</p><p className={`text-xs font-black ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>2048 × 2048px</p></div>
                             </div>
                             <div className="flex items-center space-x-3">
-                              <div className="w-10 h-10 bg-blue-600/10 rounded-xl flex items-center justify-center border border-blue-500/20"><Palette size={18} className="text-blue-400" /></div>
-                              <div><p className="text-[9px] text-gray-600 uppercase tracking-wider font-bold">Colors</p><p className="text-xs font-black text-white">{selectedLogo.palette?.colors.length || 4} Extracted</p></div>
+                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${isDarkMode ? 'bg-blue-600/10 border-blue-500/20' : 'bg-blue-50 border-blue-200'}`}><Palette size={18} className="text-blue-400" /></div>
+                              <div><p className="text-[9px] text-gray-600 uppercase tracking-wider font-bold">Colors</p><p className={`text-xs font-black ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{selectedLogo.palette?.colors.length || 4} Extracted</p></div>
                             </div>
                           </div>
                           <div className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-emerald-600/10 to-blue-600/10 border border-emerald-500/20 rounded-xl">
@@ -857,16 +883,16 @@ const App: React.FC = () => {
                       <div className="flex items-center justify-between mb-16">
                         <div className="flex items-center space-x-6">
                           <div className="w-16 h-16 bg-gradient-to-br from-blue-600/20 to-purple-600/20 rounded-3xl flex items-center justify-center text-purple-400"><Smartphone size={32}/></div>
-                          <div><h3 className="text-3xl font-black uppercase text-white tracking-tight">Ecosystem Deployment</h3><p className="text-[11px] font-black uppercase text-gray-500 tracking-[0.4em]">Multi-Context Simulation Hub</p></div>
+                          <div><h3 className={`text-3xl font-black uppercase tracking-tight ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Ecosystem Deployment</h3><p className="text-[11px] font-black uppercase text-gray-500 tracking-[0.4em]">Multi-Context Simulation Hub</p></div>
                         </div>
                       </div>
                       <BrandPreview logoUrl={isDarkMode ? selectedLogo.darkUrl : selectedLogo.url} />
                     </div>
                   </>
                 ) : activeTab === 'variants' ? (
-                  <LogoVariantsGrid variants={selectedLogo.variants || []} onDownloadAll={() => {}} />
+                  <LogoVariantsGrid variants={selectedLogo.variants || []} onDownloadAll={handleDownloadAllVariants} />
                 ) : activeTab === 'styles' ? (
-                  <StyleTransferPanel currentStyles={selectedLogo.styledVersions || []} isProcessing={isProcessingStyle} onApplyStyle={handleApplyArtisticStyle} onDownloadStyle={(url) => {}} />
+                  <StyleTransferPanel currentStyles={selectedLogo.styledVersions || []} isProcessing={isProcessingStyle} onApplyStyle={handleApplyArtisticStyle} onDownloadStyle={(url, label) => triggerDownload(url, `${brandName}-${label}.png`)} />
                 ) : (
                   <ThreeViewer logoUrl={selectedLogo.url} />
                 )}
@@ -925,9 +951,9 @@ const App: React.FC = () => {
       )}
 
       {isEditorOpen && selectedLogo && <LogoEditor logo={selectedLogo} isDarkMode={isDarkMode} onClose={() => setIsEditorOpen(false)} onSave={(updated) => { setLogos(logos.map(l => l.id === updated.id ? updated : l)); setIsEditorOpen(false); }} />}
-      {isKitOpen && selectedLogo?.brandKit && <BrandKitGallery kit={selectedLogo.brandKit} onClose={() => setIsKitOpen(false)} />}
+      {isKitOpen && selectedLogo?.brandKit && <BrandKitGallery kit={selectedLogo.brandKit} onClose={() => setIsKitOpen(false)} onDownloadAll={handleDownloadAllBrandKit} isDarkMode={isDarkMode} />}
       {isAccessibilityModalOpen && selectedLogo && <AccessibilityAuditModal logo={selectedLogo} onClose={() => setIsAccessibilityModalOpen(false)} onApplyFixedPalette={handleApplyFixedPalette} />}
-      {isReportOpen && selectedLogo?.effectivenessReport && <EffectivenessReportModal logo={selectedLogo} report={selectedLogo.effectivenessReport} onClose={() => setIsReportOpen(false)} />}
+      {isReportOpen && selectedLogo?.effectivenessReport && <EffectivenessReportModal logo={selectedLogo} report={selectedLogo.effectivenessReport} onClose={() => setIsReportOpen(false)} isDarkMode={isDarkMode} />}
       {isVeoModalOpen && <VeoMotionModal isDarkMode={isDarkMode} onClose={() => setIsVeoModalOpen(false)} />}
 
       <div className="fixed bottom-8 right-8 z-[100] flex flex-col-reverse items-end space-y-reverse space-y-4">
