@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Layers, History, ArrowRight, Sparkles, Moon, Sun, Loader2, Box, Zap, Download, Maximize2, Terminal, Edit3, Grid3X3, CheckCircle2, Edit, ShieldCheck, BarChart3, Brush, Smartphone, Package, LayoutGrid, Globe, CloudUpload, Palette, X, Upload, Sliders, Search, Type, Activity } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Layers, History, ArrowRight, Sparkles, Moon, Sun, Loader2, Box, Zap, Download, Maximize2, Terminal, Edit3, Grid3X3, CheckCircle2, Edit, ShieldCheck, BarChart3, Brush, Smartphone, Package, LayoutGrid, Globe, CloudUpload, Palette, X, Upload, Sliders, Search, Type, Activity, Video } from 'lucide-react';
 import { generateKitchaLogo, analyzeLogoPalette, generateBrandStrategy, recomposeLogo, extractBrandInfoFromImage, generateBrandKitAsset, generateLogoVariant, analyzeLogoEffectiveness, applyArtisticStyle } from './services/gemini';
 import { GeneratedLogo, ColorPalette, BrandTheme, BrandTone, TargetAudience, LogoLayer, BrandKit, BrandKitAsset, LogoVariant, LogoStyle } from './types';
 import LogoCard from './components/LogoCard';
@@ -12,6 +12,7 @@ import AccessibilityAuditModal from './components/AccessibilityAuditModal';
 import EffectivenessReportModal from './components/EffectivenessReportModal';
 import StyleTransferPanel from './components/StyleTransferPanel';
 import ThreeViewer from './components/ThreeViewer';
+import VeoMotionModal from './components/VeoMotionModal';
 
 const STYLE_PRESETS: { id: BrandTheme, label: string, icon: React.ReactNode }[] = [
   { id: 'modern', label: 'Geometric', icon: <Box size={14} /> },
@@ -30,7 +31,8 @@ const Tooltip: React.FC<{
   children: React.ReactNode;
   content: string;
   position?: 'top' | 'bottom' | 'left' | 'right';
-}> = ({ children, content, position = 'top' }) => {
+  isDarkMode: boolean;
+}> = ({ children, content, position = 'top', isDarkMode }) => {
   const [isVisible, setIsVisible] = useState(false);
 
   const positionClasses = {
@@ -50,14 +52,20 @@ const Tooltip: React.FC<{
       {isVisible && (
         <div className={`absolute ${positionClasses[position]} z-[1000] animate-in fade-in zoom-in-95 duration-200`}>
           <div className="relative">
-            <div className="px-4 py-2.5 bg-black/95 backdrop-blur-xl border border-white/20 rounded-xl shadow-2xl whitespace-nowrap">
-              <p className="text-[10px] font-black uppercase tracking-widest text-white">{content}</p>
+            <div className={`px-4 py-2.5 backdrop-blur-xl border rounded-xl shadow-2xl whitespace-nowrap ${
+              isDarkMode 
+                ? 'bg-black/95 border-white/20 shadow-2xl' 
+                : 'bg-white/95 border-gray-300 shadow-lg'
+            }`}>
+              <p className={`text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{content}</p>
             </div>
-            <div className={`absolute w-2 h-2 bg-black/95 border-white/20 ${
-              position === 'top' ? 'bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 rotate-45 border-b border-r' :
-              position === 'bottom' ? 'top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 rotate-45 border-t border-l' :
-              position === 'left' ? 'right-0 top-1/2 -translate-y-1/2 translate-x-1/2 rotate-45 border-t border-r' :
-              'left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 rotate-45 border-b border-l'
+            <div className={`absolute w-2 h-2 rotate-45 border ${
+              isDarkMode ? 'bg-black border-white/20' : 'bg-white border-gray-300'
+            } ${
+              position === 'top' ? 'bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 border-b border-r' :
+              position === 'bottom' ? 'top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 border-t border-l' :
+              position === 'left' ? 'right-0 top-1/2 -translate-y-1/2 translate-x-1/2 border-t border-r' :
+              'left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 border-b border-l'
             }`} />
           </div>
         </div>
@@ -72,17 +80,22 @@ const FabAction: React.FC<{
   color: string;
   delay: string;
   onClick: () => void;
-}> = ({ icon, label, color, delay, onClick }) => (
+  isDarkMode: boolean;
+}> = ({ icon, label, color, delay, onClick, isDarkMode }) => (
   <div className={`flex items-center space-x-3 animate-in slide-in-from-right-8 fade-in ${delay}`}>
-    <div className="px-4 py-2 bg-black/90 backdrop-blur-xl border border-white/10 rounded-xl shadow-xl">
-      <span className="text-xs font-bold text-white whitespace-nowrap">{label}</span>
+    <div className={`px-4 py-2 backdrop-blur-xl border rounded-xl shadow-xl ${
+      isDarkMode 
+        ? 'bg-black/90 border-white/10' 
+        : 'bg-white/95 border-gray-200 shadow-lg'
+    }`}>
+      <span className={`text-xs font-bold whitespace-nowrap ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{label}</span>
     </div>
     <button
       onClick={onClick}
       className="relative group/action"
     >
       <div className={`absolute inset-0 bg-gradient-to-tr ${color} rounded-full blur-xl opacity-60 group-hover/action:opacity-100 transition-opacity`} />
-      <div className={`relative w-14 h-14 bg-gradient-to-tr ${color} rounded-full shadow-xl flex items-center justify-center group-hover/action:scale-110 transition-all duration-300`}>
+      <div className={`relative w-14 h-14 bg-gradient-to-tr ${color} rounded-full shadow-xl flex items-center justify-center group-hover/action:scale-110 transition-all duration-300 text-white`}>
         {icon}
       </div>
     </button>
@@ -91,7 +104,7 @@ const FabAction: React.FC<{
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'preview' | 'variants' | 'styles' | '3d'>('preview');
-  const [brandName, setBrandName] = useState('Kitcha');
+  const [brandName, setBrandName] = useState('Kynora');
   const [layout, setLayout] = useState<'horizontal' | 'vertical' | 'avatar' | 'header'>('vertical');
   const [prompt, setPrompt] = useState('A minimalist professional icon of a terracotta orange cooking pot.');
   const [primaryColor, setPrimaryColor] = useState('#8B5CF6'); 
@@ -115,13 +128,38 @@ const App: React.FC = () => {
   const [isAccessibilityModalOpen, setIsAccessibilityModalOpen] = useState(false);
   const [isAuditing, setIsAuditing] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
+  const [isVeoModalOpen, setIsVeoModalOpen] = useState(false);
 
-  const [notifications, setNotifications] = useState([
-    { id: 1, title: 'Logo generated', message: 'Your new logo is ready', time: '2m ago', read: false },
-    { id: 2, title: 'Export complete', message: 'Brand kit downloaded', time: '5m ago', read: false },
-    { id: 3, title: 'AI suggestion', message: 'New color palette available', time: '10m ago', read: true },
-  ]);
+  // Problem 8: Fixed Notifications state management
+  const [notifications, setNotifications] = useState<Array<{
+    id: string;
+    title: string;
+    message: string;
+    time: string;
+    read: boolean;
+  }>>([]);
+
   const [showNotifications, setShowNotifications] = useState(false);
+  
+  const addNotification = useCallback((title: string, message: string) => {
+    const newNotif = {
+      id: crypto.randomUUID(),
+      title,
+      message,
+      time: 'Just now',
+      read: false,
+    };
+    setNotifications(prev => [newNotif, ...prev].slice(0, 10)); // Keep max 10
+  }, []);
+
+  const markAllRead = useCallback(() => {
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  }, []);
+
+  const clearAllNotifications = useCallback(() => {
+    setNotifications([]);
+  }, []);
+
   const unreadCount = notifications.filter(n => !n.read).length;
 
   const selectedLogo = logos.find(l => l.id === selectedLogoId) || logos[0];
@@ -175,6 +213,7 @@ const App: React.FC = () => {
         ...l, 
         styledVersions: [newStyle, ...(l.styledVersions || [])] 
       } : l));
+      addNotification('Style Applied', `${styleId.charAt(0).toUpperCase() + styleId.slice(1)} look integrated.`);
     } catch (err) {
       console.error("Style application failed", err);
     } finally {
@@ -190,6 +229,7 @@ const App: React.FC = () => {
       const report = await analyzeLogoEffectiveness(selectedLogo.url, brandName);
       setLogos(prev => prev.map(l => l.id === selectedLogo.id ? { ...l, effectivenessReport: report } : l));
       setIsReportOpen(true);
+      addNotification('Neural Audit Complete', `Design score: ${report.overall_score}/100.`);
     } catch (err) {
       console.error("Audit failed", err);
     } finally {
@@ -214,6 +254,7 @@ const App: React.FC = () => {
         darkUrl: newDarkUrl, 
         palette: newPalette 
       } : l));
+      addNotification('Colors Remediated', 'Palette updated for WCAG compliance.');
     } catch (err) {
       console.error("Failed to sync accessible palette", err);
     } finally {
@@ -257,6 +298,7 @@ const App: React.FC = () => {
       }
       setLogos(prev => prev.map(l => l.id === selectedLogo.id ? { ...l, variants } : l));
       setActiveTab('variants');
+      addNotification('Variants Ready', `Synthesized ${variants.length} master variations.`);
     } catch (err) {
       console.error("Variants synthesis failed", err);
     } finally {
@@ -296,6 +338,7 @@ const App: React.FC = () => {
       const brandKit: BrandKit = { logoId: selectedLogo.id, assets };
       setLogos(prev => prev.map(l => l.id === selectedLogo.id ? { ...l, brandKit } : l));
       setIsKitOpen(true);
+      addNotification('Brand Kit Generated', 'All physical artifacts synthesized.');
     } catch (err) {
       console.error("Brand Kit synthesis failed", err);
     } finally {
@@ -347,6 +390,7 @@ const App: React.FC = () => {
       newLogo.darkUrl = darkUrl;
       setLogos(prev => [newLogo, ...prev]);
       setSelectedLogoId(newLogo.id);
+      addNotification('Logo Imported', `Successfully analyzed ${name}'s DNA.`);
     } catch (error) {
       console.error('❌ Logo upload failed:', error);
     } finally {
@@ -378,7 +422,7 @@ const App: React.FC = () => {
       };
       setLogos(prev => [newLogo, ...prev]);
       setSelectedLogoId(newLogo.id);
-      setNotifications(prev => [{ id: Date.now(), title: 'Logo generated', message: `Identity for ${brandName} synthesized.`, time: 'Just now', read: false }, ...prev]);
+      addNotification('Identity Forged', `Symbolic vision for ${brandName} synthesized.`);
     } catch (err: any) { 
       console.error(err);
     } finally { 
@@ -393,11 +437,12 @@ const App: React.FC = () => {
       if (selectedLogo) {
         const link = document.createElement('a');
         link.href = selectedLogo.url;
-        link.download = `kitcha-${selectedLogo.id.slice(0,5)}.png`;
+        link.download = `kynora-${selectedLogo.id.slice(0,5)}.png`;
         link.click();
       }
     }, category: 'Actions' },
     { icon: <Edit size={16} />, label: 'Open Editor', shortcut: 'E', action: () => setIsEditorOpen(true), category: 'Actions' },
+    { icon: <Video size={16} />, label: 'Veo Motion Studio', shortcut: 'V', action: () => setIsVeoModalOpen(true), category: 'Actions' },
     { icon: <Palette size={16} />, label: 'Change Style', shortcut: 'C', action: () => {
       const themes: BrandTheme[] = ['modern', 'minimalist', 'luxury', 'tech'];
       const next = themes[(themes.indexOf(style) + 1) % themes.length];
@@ -435,7 +480,7 @@ const App: React.FC = () => {
                 </div>
               </div>
               <div>
-                <h1 className="font-bold text-2xl bg-gradient-to-r from-white via-purple-200 to-blue-200 bg-clip-text text-transparent tracking-tight">Kitcha Studio</h1>
+                <h1 className="font-bold text-2xl bg-gradient-to-r from-white via-purple-200 to-blue-200 bg-clip-text text-transparent tracking-tight">Kynora Studio</h1>
                 <div className="flex items-center space-x-3 mt-1">
                   <span className="text-[9px] font-black uppercase tracking-[0.5em] text-gray-600">Identity Forge</span>
                   <div className="flex items-center space-x-1">
@@ -454,7 +499,7 @@ const App: React.FC = () => {
               </nav>
               <div className="h-8 w-[1px] bg-gradient-to-b from-transparent via-white/10 to-transparent" />
               
-              <Tooltip content="Live Alerts" position="bottom">
+              <Tooltip content="Live Alerts" position="bottom" isDarkMode={isDarkMode}>
                 <button
                   onClick={() => setShowNotifications(!showNotifications)}
                   className="relative group"
@@ -476,36 +521,66 @@ const App: React.FC = () => {
               </Tooltip>
 
               {showNotifications && (
-                <div className="absolute top-16 right-0 w-96 bg-[#1A1A1E]/98 backdrop-blur-3xl border border-white/10 rounded-3xl shadow-2xl overflow-hidden animate-in slide-in-from-top-4 fade-in duration-300 z-[200]">
-                  <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between">
+                <div className={`absolute top-16 right-0 w-96 backdrop-blur-3xl border rounded-3xl shadow-2xl overflow-hidden animate-in slide-in-from-top-4 fade-in duration-300 z-[200] ${
+                  isDarkMode 
+                    ? 'bg-[#1A1A1E]/98 border-white/10' 
+                    : 'bg-white/98 border-gray-200'
+                }`}>
+                  <div className={`px-6 py-4 border-b flex items-center justify-between ${isDarkMode ? 'border-white/5' : 'border-gray-100'}`}>
                     <div className="flex items-center space-x-3">
-                      <div className="p-2 bg-blue-600/10 rounded-xl border border-blue-500/20">
-                        <Activity size={18} className="text-blue-400" />
+                      <div className={`p-2 rounded-xl border ${
+                        isDarkMode 
+                          ? 'bg-blue-600/10 border-blue-500/20' 
+                          : 'bg-blue-50 border-blue-200'
+                      }`}>
+                        <Activity size={18} className={isDarkMode ? 'text-blue-400' : 'text-blue-600'} />
                       </div>
-                      <h3 className="text-sm font-black uppercase tracking-wider text-white">
+                      <h3 className={`text-sm font-black uppercase tracking-wider ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                         Notifications
                       </h3>
                     </div>
-                    <button
-                      onClick={() => setNotifications(notifications.map(n => ({ ...n, read: true })))}
-                      className="text-xs font-bold text-blue-400 hover:text-blue-300 transition-colors"
-                    >
-                      Mark all read
-                    </button>
+                    <div className="flex items-center space-x-2">
+                      {unreadCount > 0 && (
+                        <button
+                          onClick={markAllRead}
+                          className={`text-xs font-bold transition-colors ${
+                            isDarkMode 
+                              ? 'text-blue-400 hover:text-blue-300' 
+                              : 'text-blue-600 hover:text-blue-700'
+                          }`}
+                        >
+                          Mark all read
+                        </button>
+                      )}
+                      <button
+                        onClick={clearAllNotifications}
+                        className={`text-xs font-bold transition-colors ${
+                          isDarkMode 
+                            ? 'text-red-400 hover:text-red-300' 
+                            : 'text-red-600 hover:text-red-700'
+                        }`}
+                      >
+                        Clear all
+                      </button>
+                    </div>
                   </div>
 
-                  <div className="max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-white/10">
+                  <div className="max-h-96 overflow-y-auto scrollbar-thin">
                     {notifications.length === 0 ? (
-                      <div className="px-6 py-12 text-center">
-                        <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">No active alerts</p>
+                      <div className="px-6 py-20 text-center">
+                        <div className={`w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center ${isDarkMode ? 'bg-white/5' : 'bg-gray-100'}`}>
+                           <Activity size={32} className={isDarkMode ? 'text-gray-600' : 'text-gray-400'} />
+                        </div>
+                        <p className={`text-sm font-bold uppercase tracking-widest ${isDarkMode ? 'text-gray-600' : 'text-gray-400'}`}>Node Quiet</p>
+                        <p className={`text-xs mt-2 ${isDarkMode ? 'text-gray-700' : 'text-gray-500'}`}>No incoming signals detected.</p>
                       </div>
                     ) : (
                       notifications.map(notif => (
                         <div
                           key={notif.id}
-                          className={`px-6 py-4 border-b border-white/5 hover:bg-white/[0.02] transition-colors cursor-pointer group ${
-                            !notif.read ? 'bg-blue-600/5' : ''
-                          }`}
+                          className={`px-6 py-4 border-b transition-colors cursor-pointer group ${
+                            !notif.read ? (isDarkMode ? 'bg-blue-600/5' : 'bg-blue-50/50') : ''
+                          } ${isDarkMode ? 'border-white/5 hover:bg-white/[0.02]' : 'border-gray-50 hover:bg-gray-50'}`}
                           onClick={() => {
                             setNotifications(notifications.map(n =>
                               n.id === notif.id ? { ...n, read: true } : n
@@ -517,10 +592,10 @@ const App: React.FC = () => {
                               <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 animate-pulse" />
                             )}
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-bold text-white group-hover:text-blue-400 transition-colors">
+                              <p className={`text-sm font-bold group-hover:text-blue-400 transition-colors ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                                 {notif.title}
                               </p>
-                              <p className="text-xs text-gray-500 mt-1 line-clamp-2 leading-relaxed">
+                              <p className="text-xs text-gray-500 mt-1 line-clamp-2 leading-relaxed font-medium">
                                 {notif.message}
                               </p>
                               <p className="text-[10px] text-gray-600 mt-2 font-mono">
@@ -539,15 +614,15 @@ const App: React.FC = () => {
                     )}
                   </div>
 
-                  <div className="px-6 py-3 bg-white/[0.02] border-t border-white/5">
-                    <button className="w-full text-xs font-bold text-blue-400 hover:text-blue-300 transition-colors py-2">
-                      View all notifications →
+                  <div className={`px-6 py-3 border-t ${isDarkMode ? 'bg-white/[0.02] border-white/5' : 'bg-gray-50 border-gray-100'}`}>
+                    <button className="w-full text-xs font-bold text-blue-400 hover:text-blue-300 transition-colors py-2 uppercase tracking-widest">
+                      Signal Log Archive
                     </button>
                   </div>
                 </div>
               )}
 
-              <Tooltip content={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"} position="bottom">
+              <Tooltip content={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"} position="bottom" isDarkMode={isDarkMode}>
                 <button onClick={() => setIsDarkMode(!isDarkMode)} className="relative group">
                   <div className="absolute inset-0 bg-gradient-to-tr from-amber-500/20 to-blue-500/20 rounded-2xl blur-lg opacity-0 group-hover:opacity-100 transition-all duration-500" />
                   <div className="relative w-12 h-12 flex items-center justify-center rounded-2xl bg-white/[0.05] border border-white/10 hover:border-white/20 transition-all duration-300 group-hover:scale-110">
@@ -556,7 +631,7 @@ const App: React.FC = () => {
                 </button>
               </Tooltip>
 
-              <Tooltip content="Launch Console (Cmd+K)" position="bottom">
+              <Tooltip content="Launch Console (Cmd+K)" position="bottom" isDarkMode={isDarkMode}>
                 <button 
                   onClick={() => setIsCommandOpen(true)}
                   className="relative group overflow-hidden"
@@ -608,7 +683,7 @@ const App: React.FC = () => {
                     <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-blue-600/20 rounded-2xl blur-xl opacity-0 group-focus-within/input:opacity-100 transition-all duration-500" />
                     <div className="relative flex items-center">
                       <div className="absolute left-5 text-gray-600 group-focus-within/input:text-purple-400 transition-colors"><Edit3 size={16} /></div>
-                      <input type="text" value={brandName} onChange={(e) => setBrandName(e.target.value)} className="w-full pl-14 pr-6 py-5 bg-black/40 border-2 border-white/[0.08] rounded-2xl text-base font-bold text-white outline-none focus:border-purple-500/50 focus:bg-black/60 transition-all duration-300" placeholder="Enter brand name..." />
+                      <input type="text" value={brandName} onChange={(e) => setBrandName(e.target.value)} className="w-full pl-14 pr-6 py-5 bg-black/40 border-2 border-white/[0.08] rounded-2xl text-base font-bold text-white outline-none focus:border-purple-500/50 focus:bg-black/60 transition-all duration-300" placeholder="e.g., Kynora, TechCorp, Luminaire..." />
                       {brandName && <div className="absolute right-5"><CheckCircle2 size={20} className="text-emerald-500 animate-scale-in" /></div>}
                     </div>
                   </div>
@@ -717,10 +792,10 @@ const App: React.FC = () => {
                               </div>
                             </div>
                             <div className="flex items-center space-x-3">
-                              <Tooltip content="Neural Effectiveness Audit" position="top">
+                              <Tooltip content="Neural Effectiveness Audit" position="top" isDarkMode={isDarkMode}>
                                 <button onClick={() => handleNeuralAudit()} className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-purple-500/20 text-gray-400 hover:text-purple-400 transition-all"><BarChart3 size={20}/></button>
                               </Tooltip>
-                              <Tooltip content="Open Synthesis Lab" position="top">
+                              <Tooltip content="Open Synthesis Lab" position="top" isDarkMode={isDarkMode}>
                                 <button onClick={() => setIsEditorOpen(true)} className="relative flex items-center space-x-3 px-8 py-4 bg-white/[0.05] border border-white/10 hover:border-purple-500/30 rounded-2xl transition-all duration-300">
                                   <Edit size={18} className="text-gray-400" /><span className="text-xs font-black uppercase tracking-[0.2em] text-gray-300">Design Lab</span>
                                 </button>
@@ -812,7 +887,9 @@ const App: React.FC = () => {
       </main>
 
       {(isGenerating || isGeneratingKit || isGeneratingVariants || isAuditing || isProcessingStyle) && (
-        <div className="fixed inset-0 z-[500] bg-black/90 backdrop-blur-2xl flex items-center justify-center animate-in fade-in duration-300">
+        <div className={`fixed inset-0 z-[500] backdrop-blur-2xl flex items-center justify-center animate-in fade-in duration-300 ${
+          isDarkMode ? 'bg-black/90' : 'bg-white/90'
+        }`}>
           <div className="relative">
             <div className="absolute inset-0 w-40 h-40">
               <div className="absolute inset-0 border-4 border-transparent border-t-purple-500 border-r-blue-500 rounded-full animate-spin" />
@@ -828,7 +905,7 @@ const App: React.FC = () => {
                 </div>
               </div>
               <div className="space-y-2 text-center">
-                <p className="text-sm font-black text-white uppercase tracking-wider">{processingMessage}</p>
+                <p className={`text-sm font-black uppercase tracking-wider ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{processingMessage}</p>
                 <div className="flex justify-center space-x-1">
                   {[0, 1, 2].map(i => (
                     <div key={i} className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
@@ -847,64 +924,129 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {isEditorOpen && selectedLogo && <LogoEditor logo={selectedLogo} onClose={() => setIsEditorOpen(false)} onSave={(updated) => { setLogos(logos.map(l => l.id === updated.id ? updated : l)); setIsEditorOpen(false); }} />}
+      {isEditorOpen && selectedLogo && <LogoEditor logo={selectedLogo} isDarkMode={isDarkMode} onClose={() => setIsEditorOpen(false)} onSave={(updated) => { setLogos(logos.map(l => l.id === updated.id ? updated : l)); setIsEditorOpen(false); }} />}
       {isKitOpen && selectedLogo?.brandKit && <BrandKitGallery kit={selectedLogo.brandKit} onClose={() => setIsKitOpen(false)} />}
       {isAccessibilityModalOpen && selectedLogo && <AccessibilityAuditModal logo={selectedLogo} onClose={() => setIsAccessibilityModalOpen(false)} onApplyFixedPalette={handleApplyFixedPalette} />}
       {isReportOpen && selectedLogo?.effectivenessReport && <EffectivenessReportModal logo={selectedLogo} report={selectedLogo.effectivenessReport} onClose={() => setIsReportOpen(false)} />}
+      {isVeoModalOpen && <VeoMotionModal isDarkMode={isDarkMode} onClose={() => setIsVeoModalOpen(false)} />}
 
       <div className="fixed bottom-8 right-8 z-[100] flex flex-col-reverse items-end space-y-reverse space-y-4">
         <button onClick={() => setIsFabOpen(!isFabOpen)} className="relative group/fab">
-          <div className="absolute inset-0 bg-gradient-to-tr from-purple-600 to-blue-600 rounded-full animate-ping opacity-75" />
-          <div className="relative w-16 h-16 bg-gradient-to-tr from-purple-600 to-blue-600 rounded-full shadow-2xl shadow-purple-600/50 flex items-center justify-center group-hover/fab:scale-110 transition-all duration-300">
+          <div className={`absolute inset-0 rounded-full animate-ping opacity-75 ${
+            isDarkMode 
+              ? 'bg-gradient-to-tr from-purple-600 to-blue-600' 
+              : 'bg-gradient-to-tr from-purple-500 to-blue-500'
+          }`} />
+          <div className={`relative w-16 h-16 rounded-full shadow-2xl flex items-center justify-center group-hover/fab:scale-110 transition-all duration-300 ${
+            isDarkMode
+              ? 'bg-gradient-to-tr from-purple-600 to-blue-600 shadow-purple-600/50'
+              : 'bg-gradient-to-tr from-purple-500 to-blue-500 shadow-purple-500/30'
+          }`}>
             <div className={`transform transition-transform duration-500 ${isFabOpen ? 'rotate-135' : 'rotate-0'}`}>
               {isFabOpen ? <X size={28} className="text-white" /> : <Zap size={28} fill="white" className="text-white" />}
             </div>
           </div>
-          <div className="absolute inset-0 bg-gradient-to-tr from-purple-600/30 to-blue-600/30 rounded-full blur-2xl opacity-60 group-hover/fab:opacity-100 transition-opacity" />
+          <div className={`absolute inset-0 rounded-full blur-2xl opacity-60 group-hover/fab:opacity-100 transition-opacity ${
+            isDarkMode
+              ? 'bg-gradient-to-tr from-purple-600/30 to-blue-600/30'
+              : 'bg-gradient-to-tr from-purple-500/20 to-blue-500/20'
+          }`} />
         </button>
         <div className={`flex flex-col-reverse items-end space-y-reverse space-y-3 transition-all duration-500 ${isFabOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
-          <FabAction icon={<Upload size={20} />} label="Quick Upload" color="from-blue-600 to-cyan-600" delay="delay-[50ms]" onClick={() => document.getElementById('logo-upload')?.click()} />
-          <FabAction icon={<Sparkles size={20} />} label="AI Suggestions" color="from-purple-600 to-pink-600" delay="delay-[100ms]" onClick={() => { if (selectedLogo) { setActiveTab('preview'); handleNeuralAudit(); } }} />
-          <FabAction icon={<Download size={20} />} label="Export All" color="from-emerald-600 to-teal-600" delay="delay-[150ms]" onClick={() => { if (selectedLogo) handleGenerateBrandKit(); }} />
-          <FabAction icon={<Sliders size={20} />} label="Settings" color="from-amber-600 to-orange-600" delay="delay-[200ms]" onClick={() => setIsEditorOpen(true)} />
+          <FabAction icon={<Upload size={20} />} label="Quick Upload" color={isDarkMode ? "from-blue-600 to-cyan-600" : "from-blue-500 to-cyan-500"} delay="delay-[50ms]" onClick={() => document.getElementById('logo-upload')?.click()} isDarkMode={isDarkMode} />
+          <FabAction icon={<Video size={20} />} label="Veo Motion" color={isDarkMode ? "from-blue-600 to-indigo-600" : "from-blue-500 to-indigo-500"} delay="delay-[75ms]" onClick={() => setIsVeoModalOpen(true)} isDarkMode={isDarkMode} />
+          <FabAction icon={<Sparkles size={20} />} label="AI Suggestions" color={isDarkMode ? "from-purple-600 to-pink-600" : "from-purple-500 to-pink-500"} delay="delay-[100ms]" onClick={() => { if (selectedLogo) { setActiveTab('preview'); handleNeuralAudit(); } }} isDarkMode={isDarkMode} />
+          <FabAction icon={<Download size={20} />} label="Export All" color={isDarkMode ? "from-emerald-600 to-teal-600" : "from-emerald-500 to-teal-500"} delay="delay-[150ms]" onClick={() => { if (selectedLogo) handleGenerateBrandKit(); }} isDarkMode={isDarkMode} />
+          <FabAction icon={<Sliders size={20} />} label="Settings" color={isDarkMode ? "from-amber-600 to-orange-600" : "from-amber-500 to-orange-500"} delay="delay-[200ms]" onClick={() => setIsEditorOpen(true)} isDarkMode={isDarkMode} />
         </div>
       </div>
 
       {isCommandOpen && (
-        <div className="fixed inset-0 z-[500] bg-black/80 backdrop-blur-xl flex items-start justify-center pt-32 px-4 animate-in fade-in duration-200" onClick={() => setIsCommandOpen(false)}>
-          <div className="w-full max-w-2xl bg-[#1A1A1E]/95 backdrop-blur-3xl border border-white/10 rounded-3xl shadow-[0_40px_100px_rgba(0,0,0,0.9)] overflow-hidden animate-in slide-in-from-top-8 zoom-in-95 duration-300" onClick={(e) => e.stopPropagation()}>
-            <div className="relative p-6 border-b border-white/5">
+        <div 
+          className={`fixed inset-0 z-[500] backdrop-blur-xl flex items-start justify-center pt-32 px-4 animate-in fade-in duration-200 ${
+            isDarkMode ? 'bg-black/80' : 'bg-gray-900/60'
+          }`}
+          onClick={() => setIsCommandOpen(false)}
+        >
+          <div 
+            className={`w-full max-w-2xl backdrop-blur-3xl border rounded-3xl shadow-[0_40px_100px_rgba(0,0,0,0.9)] overflow-hidden animate-in slide-in-from-top-8 zoom-in-95 duration-300 ${
+              isDarkMode 
+                ? 'bg-[#1A1A1E]/95 border-white/10' 
+                : 'bg-white/95 border-gray-200'
+            }`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={`relative p-6 border-b ${isDarkMode ? 'border-white/5' : 'border-gray-100'}`}>
               <div className="flex items-center space-x-4">
-                <div className="p-3 bg-purple-600/10 rounded-xl border border-purple-500/20"><Search size={20} className="text-purple-400" /></div>
-                <input type="text" value={commandSearch} onChange={(e) => setCommandSearch(e.target.value)} placeholder="Type a command or search..." className="flex-1 bg-transparent text-lg font-medium text-white outline-none placeholder:text-gray-600" autoFocus />
-                <kbd className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-xs font-mono text-gray-500">ESC</kbd>
+                <div className={`p-3 rounded-xl border ${
+                  isDarkMode 
+                    ? 'bg-purple-600/10 border-purple-500/20' 
+                    : 'bg-purple-50 border-purple-200'
+                }`}>
+                  <Search size={20} className={isDarkMode ? 'text-purple-400' : 'text-purple-600'} />
+                </div>
+                <input 
+                  type="text" 
+                  value={commandSearch} 
+                  onChange={(e) => setCommandSearch(e.target.value)} 
+                  placeholder="Type a command or search..." 
+                  className={`flex-1 bg-transparent text-lg font-medium outline-none ${
+                    isDarkMode 
+                      ? 'text-white placeholder:text-gray-600' 
+                      : 'text-gray-900 placeholder:text-gray-400'
+                  }`}
+                  autoFocus 
+                />
+                <kbd className={`px-3 py-1.5 border rounded-lg text-xs font-mono ${
+                  isDarkMode 
+                    ? 'bg-white/5 border-white/10 text-gray-500' 
+                    : 'bg-gray-100 border-gray-300 text-gray-600'
+                }`}>
+                  ESC
+                </kbd>
               </div>
             </div>
             <div className="max-h-[500px] overflow-y-auto scrollbar-thin scrollbar-thumb-white/10">
               {Object.entries(groupedCommands).map(([category, cmds]) => (
                 <div key={category} className="p-3">
-                  <div className="px-4 py-2"><h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-600">{category}</h3></div>
+                  <div className="px-4 py-2">
+                    <h3 className={`text-[10px] font-black uppercase tracking-[0.3em] ${isDarkMode ? 'text-gray-600' : 'text-gray-400'}`}>
+                      {category}
+                    </h3>
+                  </div>
                   <div className="space-y-1">
                     {cmds.map((cmd, idx) => (
-                      <button key={idx} onClick={() => { cmd.action(); setIsCommandOpen(false); setCommandSearch(''); }} className="w-full flex items-center justify-between px-4 py-3.5 rounded-2xl text-gray-300 hover:text-white hover:bg-white/5 transition-all duration-200 group/cmd">
+                      <button 
+                        key={idx} 
+                        onClick={() => { cmd.action(); setIsCommandOpen(false); setCommandSearch(''); }} 
+                        className={`w-full flex items-center justify-between px-4 py-3.5 rounded-2xl transition-all duration-200 group/cmd ${
+                          isDarkMode 
+                            ? 'text-gray-300 hover:text-white hover:bg-white/5' 
+                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                        }`}
+                      >
                         <div className="flex items-center space-x-4">
-                          <div className="p-2 bg-white/5 rounded-xl group-hover/cmd:bg-purple-600/10 transition-colors">{cmd.icon}</div>
+                          <div className={`p-2 rounded-xl group-hover/cmd:bg-purple-600/10 transition-colors ${isDarkMode ? 'bg-white/5' : 'bg-gray-100'}`}>{cmd.icon}</div>
                           <span className="text-sm font-medium">{cmd.label}</span>
                         </div>
-                        <kbd className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-xs font-mono text-gray-500 group-hover/cmd:text-purple-400 group-hover/cmd:border-purple-500/30 transition-colors">{cmd.shortcut}</kbd>
+                        <kbd className={`px-3 py-1.5 border rounded-lg text-xs font-mono transition-colors ${
+                          isDarkMode 
+                            ? 'bg-white/5 border-white/10 text-gray-600 group-hover/cmd:text-purple-400 group-hover/cmd:border-purple-500/30' 
+                            : 'bg-gray-50 border-gray-200 text-gray-400 group-hover/cmd:text-purple-600 group-hover/cmd:border-purple-200'
+                        }`}>{cmd.shortcut}</kbd>
                       </button>
                     ))}
                   </div>
                 </div>
               ))}
             </div>
-            <div className="px-6 py-4 border-t border-white/5 bg-white/[0.02] flex items-center justify-between">
-              <div className="flex items-center space-x-6 text-xs text-gray-600">
-                <div className="flex items-center space-x-2"><kbd className="px-2 py-1 bg-white/5 rounded text-[10px] font-mono">↑↓</kbd><span>Navigate</span></div>
-                <div className="flex items-center space-x-2"><kbd className="px-2 py-1 bg-white/5 rounded text-[10px] font-mono">Enter</kbd><span>Select</span></div>
-                <div className="flex items-center space-x-2"><kbd className="px-2 py-1 bg-white/5 rounded text-[10px] font-mono">ESC</kbd><span>Close</span></div>
+            <div className={`px-6 py-4 border-t flex items-center justify-between ${isDarkMode ? 'border-white/5 bg-white/[0.02]' : 'border-gray-100 bg-gray-50/50'}`}>
+              <div className={`flex items-center space-x-6 text-xs ${isDarkMode ? 'text-gray-600' : 'text-gray-400'}`}>
+                <div className="flex items-center space-x-2"><kbd className={`px-2 py-1 rounded text-[10px] font-mono ${isDarkMode ? 'bg-white/5' : 'bg-white border border-gray-200'}`}>↑↓</kbd><span>Navigate</span></div>
+                <div className="flex items-center space-x-2"><kbd className={`px-2 py-1 rounded text-[10px] font-mono ${isDarkMode ? 'bg-white/5' : 'bg-white border border-gray-200'}`}>Enter</kbd><span>Select</span></div>
+                <div className="flex items-center space-x-2"><kbd className={`px-2 py-1 rounded text-[10px] font-mono ${isDarkMode ? 'bg-white/5' : 'bg-white border border-gray-200'}`}>ESC</kbd><span>Close</span></div>
               </div>
-              <div className="flex items-center space-x-2 text-xs text-gray-600"><Terminal size={12} /><span>Command Palette</span></div>
+              <div className={`flex items-center space-x-2 text-xs ${isDarkMode ? 'text-gray-600' : 'text-gray-400'}`}><Terminal size={12} /><span>Command Palette</span></div>
             </div>
           </div>
         </div>
@@ -914,11 +1056,11 @@ const App: React.FC = () => {
          <div className="max-w-screen-2xl mx-auto px-8 flex flex-col items-center space-y-12 text-center">
             <div className="flex items-center space-x-4 text-purple-600 dark:text-purple-500">
                <Zap size={32} fill="currentColor" />
-               <span className="text-3xl font-black tracking-tighter text-[#1D2B3A] dark:text-white uppercase">KITCHA STUDIO</span>
+               <span className="text-3xl font-black tracking-tighter text-[#1D2B3A] dark:text-white uppercase">KYNORA STUDIO</span>
             </div>
             <p className="text-gray-500 text-sm max-w-xl font-medium">Forging the identity layer of the intelligent web.</p>
             <div className="pt-12 border-t border-gray-200 dark:border-white/5 w-full flex justify-between items-center text-[10px] font-bold text-gray-400 dark:text-gray-700 uppercase tracking-widest">
-               <span>© 2026 Kitcha Intelligence Labs</span>
+               <span>© 2025 Kynora Brand Intelligence Labs</span>
                <span>Powered by Gemini 3 & Veo Motion</span>
             </div>
          </div>

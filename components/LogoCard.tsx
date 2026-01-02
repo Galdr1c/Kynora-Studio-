@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Download, Share2, Layers, Zap } from 'lucide-react';
 import { GeneratedLogo } from '../types';
@@ -15,7 +16,7 @@ const LogoCard: React.FC<LogoCardProps> = ({ logo, isSelected, onSelect }) => {
     e.stopPropagation();
     const link = document.createElement('a');
     link.href = logo.url;
-    link.download = `kitcha-forge-${logo.id.slice(0, 5)}.png`;
+    link.download = `kynora-forge-${logo.id.slice(0, 5)}.png`;
     link.click();
   };
 

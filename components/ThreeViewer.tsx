@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
@@ -184,7 +185,7 @@ const ThreeViewer: React.FC<ThreeViewerProps> = ({ logoUrl }) => {
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'kitcha-3d-logo.gltf';
+      link.download = 'kynora-3d-logo.gltf';
       link.click();
     }, (error) => {
       console.error('Export failed', error);
@@ -197,7 +198,7 @@ const ThreeViewer: React.FC<ThreeViewerProps> = ({ logoUrl }) => {
     const dataUrl = rendererRef.current.domElement.toDataURL('image/png');
     const link = document.createElement('a');
     link.href = dataUrl;
-    link.download = 'kitcha-3d-render.png';
+    link.download = 'kynora-3d-render.png';
     link.click();
   };
 

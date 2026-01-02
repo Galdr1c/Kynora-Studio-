@@ -67,6 +67,50 @@ export const applyArtisticStyle = async (
   });
 };
 
+export const generateVeoMotion = async (
+  base64Image: string,
+  prompt: string,
+  aspectRatio: '16:9' | '9:16'
+): Promise<string> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const imageData = base64Image.includes(',') ? base64Image.split(',')[1] : base64Image;
+
+  let operation = await ai.models.generateVideos({
+    model: 'veo-3.1-fast-generate-preview',
+    prompt: prompt || 'Professional motion graphics animation, high quality, cinematic.',
+    image: {
+      imageBytes: imageData,
+      mimeType: 'image/png',
+    },
+    config: {
+      numberOfVideos: 1,
+      resolution: '720p',
+      aspectRatio: aspectRatio
+    }
+  });
+
+  while (!operation.done) {
+    await new Promise(resolve => setTimeout(resolve, 10000));
+    operation = await ai.operations.getVideosOperation({ operation: operation });
+  }
+
+  if (operation.error) {
+    throw new Error(JSON.stringify(operation.error));
+  }
+
+  const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
+  if (!downloadLink) {
+    throw new Error("Video synthesis failed to produce a valid link.");
+  }
+
+  const response = await fetch(`${downloadLink}&key=${process.env.API_KEY}`);
+  if (!response.ok) {
+    throw new Error(`Download failed: ${response.statusText}`);
+  }
+  const blob = await response.blob();
+  return URL.createObjectURL(blob);
+};
+
 export const analyzeLogoEffectiveness = async (
   logoUrl: string,
   brandName: string,
@@ -541,6 +585,7 @@ export const recomposeLogo = async (
   });
 };
 
+// Example: generateKynoraLogo() - but keep function names as is for code stability
 export const generateKitchaLogo = async (
   userPrompt: string, 
   brandName: string,
@@ -720,12 +765,26 @@ export const generateBrandReveal = async (brandName: string, style: string, logo
     },
     config: { numberOfVideos: 1, resolution: '720p', aspectRatio: '16:9' }
   });
+  
   while (!operation.done) {
     await new Promise(resolve => setTimeout(resolve, 10000));
     operation = await ai.operations.getVideosOperation({ operation: operation });
   }
+
+  if (operation.error) {
+    throw new Error(JSON.stringify(operation.error));
+  }
+
   const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
+  if (!downloadLink) {
+    throw new Error("No video download link found in operation response.");
+  }
+
   const response = await fetch(`${downloadLink}&key=${process.env.API_KEY}`);
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to download video: ${response.status} ${response.statusText} - ${errorText}`);
+  }
   const blob = await response.blob();
   return URL.createObjectURL(blob);
 };
